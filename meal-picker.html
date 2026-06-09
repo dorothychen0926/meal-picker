@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今天吃什麼？</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+  :root {
+    --bg: #1a1a18;
+    --surface: #252522;
+    --surface2: #2e2e2a;
+    --accent: #a8b87a;
+    --accent-dim: #8fa062;
+    --text: #cdd898;
+    --text-body: #d4ddb0;
+    --text-muted: #7a8a50;
+    --text-dim: #4a5630;
+    --danger: #c0614a;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text-body);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  .header {
+    padding: 28px 20px 16px;
+    text-align: center;
+    border-bottom: 1px solid var(--surface2);
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .header h1 {
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--surface2);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .tab {
+    flex: 1;
+    padding: 14px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .section { display: none; padding: 20px; }
+  .section.active { display: block; }
+
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .filter-btn {
+    padding: 7px 14px;
+    border-radius: 99px;
+    border: 1.5px solid var(--surface2);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(168,184,122,0.09);
+  }
+
+  .spin-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--accent);
+    color: #1a1a18;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 17px;
+    font-weight: 900;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.15s;
+    margin-bottom: 24px;
+  }
+  .spin-btn:active { transform: scale(0.97); background: var(--accent-dim); }
+
+  .result-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    text-align: center;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: opacity 0.2s;
+  }
+  .result-empty { color: var(--text-dim); font-size: 14px; }
+  .result-category {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .result-name {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--text);
+  }
+  .result-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: rgba(168,184,122,0.09);
+    border: 1.5px solid rgba(168,184,122,0.3);
+    border-radius: 99px;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .result-no-link { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  .list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .list-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .list-count { font-size: 12px; color: var(--text-dim); }
+  .search-input {
+    width: 100%;
+    padding: 11px 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--surface2);
+    border-radius: var(--radius-sm);
+    color: var(--text-body);
+    font-size: 14px;
+    font-family: inherit;
+    margin-bottom: 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text-dim); }
+
+  .meal-list { display: flex; flex-direction: column; gap: 8px; }
+  .meal-item {
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .meal-info { flex: 1; min-width: 0; }
+  .meal-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .meal-cat { font-size: 11px; color: var(--accent); margin-top: 2px; letter-spacing: 0.05em; }
+  .meal-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .action-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .link-btn { background: rgba(168,184,122,0.1); color: var(--accent); }
+  .link-btn:active { background: rgba(168,184,122,0.22); }
+  .del-btn { background: rgba(192,97,74,0.1); color: var(--danger); }
+  .del-btn:active { background: rgba(192,97,74,0.25); }
+  .no-link-icon { background: var(--surface2); color: var(--text-dim); cursor: default; }
+
+  /* Add form */
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .form-input {
+    width: 100%;
+    padding: 13px 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--surface2);
+    border-radius: var(--radius-sm);
+    color: var(--text-body);
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--text-dim); }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .cat-option {
+    padding: 13px 10px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--surface2);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .cat-option.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(168,184,122,0.09);
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #1a1a18;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-weight: 900;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.15s;
+  }
+  .submit-btn:active { transform: scale(0.97); background: var(--accent-dim); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #3a3a36;
+    color: var(--text-body);
+    padding: 11px 20px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .loading {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .spinner {
+    width: 24px; height: 24px;
+    border: 2px solid var(--surface2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .shake { animation: shake 0.4s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    60% { transform: translateX(6px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-eyebrow">菜色清單</div>
+  <h1>今天吃什麼？</h1>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('random')">🎲 隨機抽</div>
+  <div class="tab" onclick="switchTab('list')">📋 清單</div>
+  <div class="tab" onclick="switchTab('add')">＋ 新增</div>
+</div>
+
+<div id="tab-random" class="section active">
+  <div class="filter-row">
+    <button class="filter-btn active" data-cat="全部" onclick="selectFilter(this)">全部</button>
+    <button class="filter-btn" data-cat="主餐" onclick="selectFilter(this)">主餐</button>
+    <button class="filter-btn" data-cat="配菜" onclick="selectFilter(this)">配菜</button>
+    <button class="filter-btn" data-cat="湯品" onclick="selectFilter(this)">湯品</button>
+    <button class="filter-btn" data-cat="健康餐" onclick="selectFilter(this)">健康餐</button>
+  </div>
+  <button class="spin-btn" onclick="randomPick()">🎲 幫我決定</button>
+  <div class="result-card" id="resultCard">
+    <div class="result-empty">按下按鈕，隨機推薦一道菜</div>
+  </div>
+</div>
+
+<div id="tab-list" class="section">
+  <div class="list-header">
+    <span class="list-title">所有菜色</span>
+    <span class="list-count" id="listCount">—</span>
+  </div>
+  <input class="search-input" id="searchInput" placeholder="搜尋菜名…" oninput="renderList()">
+  <div class="meal-list" id="mealList">
+    <div class="loading"><div class="spinner"></div>載入中…</div>
+  </div>
+</div>
+
+<div id="tab-add" class="section">
+  <div class="form-group">
+    <label class="form-label">菜名</label>
+    <input class="form-input" id="addName" placeholder="例：番茄炒蛋">
+  </div>
+  <div class="form-group">
+    <label class="form-label">分類</label>
+    <div class="cat-grid">
+      <button class="cat-option" onclick="pickCat('主餐', this)">主餐</button>
+      <button class="cat-option" onclick="pickCat('配菜', this)">配菜</button>
+      <button class="cat-option" onclick="pickCat('湯品', this)">湯品</button>
+      <button class="cat-option" onclick="pickCat('健康餐', this)">健康餐</button>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">影片連結（選填）</label>
+    <input class="form-input" id="addUrl" placeholder="https://…" type="url">
+  </div>
+  <button class="submit-btn" id="submitBtn" onclick="addMeal()">新增菜色</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbzX4yJ4ZREgBVV88lkmRE4dVr4Ltnw9lHEilXRrzjygD7fwIw5-bTrHLeS1fP1X8b0AeA/exec";
+let meals = [];
+let selectedFilter = "全部";
+let selectedCat = "";
+
+async function fetchMeals() {
+  try {
+    const res = await fetch(`${API}?action=getAll`);
+    const data = await res.json();
+    meals = data.rows || [];
+    renderList();
+  } catch(e) {
+    showToast("載入失敗，請重試");
+  }
+}
+
+function selectFilter(btn) {
+  selectedFilter = btn.dataset.cat;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function randomPick() {
+  const pool = selectedFilter === "全部" ? meals : meals.filter(m => m.category === selectedFilter);
+  if (!pool.length) {
+    const card = document.getElementById("resultCard");
+    card.classList.add("shake");
+    setTimeout(() => card.classList.remove("shake"), 400);
+    showToast("這個分類還沒有菜色");
+    return;
+  }
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  const card = document.getElementById("resultCard");
+  card.style.opacity = "0";
+  setTimeout(() => {
+    card.innerHTML = `
+      <div class="result-category">${pick.category || "未分類"}</div>
+      <div class="result-name">${pick.name}</div>
+      ${pick.url
+        ? `<a class="result-link" href="${pick.url}" target="_blank">▶ 看做法影片</a>`
+        : `<div class="result-no-link">尚未加入影片連結</div>`}
+    `;
+    card.style.opacity = "1";
+  }, 150);
+}
+
+function renderList() {
+  const q = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = meals.filter(m => !q || m.name.toLowerCase().includes(q));
+  document.getElementById("listCount").textContent = `${filtered.length} 道菜`;
+  const list = document.getElementById("mealList");
+  if (!filtered.length) {
+    list.innerHTML = `<div class="loading" style="padding:30px 0">找不到符合的菜色</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(m => `
+    <div class="meal-item">
+      <div class="meal-info">
+        <div class="meal-name">${m.name}</div>
+        <div class="meal-cat">${m.category || "未分類"}</div>
+      </div>
+      <div class="meal-actions">
+        ${m.url
+          ? `<a class="action-btn link-btn" href="${m.url}" target="_blank">▶</a>`
+          : `<span class="action-btn no-link-icon">—</span>`}
+        <button class="action-btn del-btn" onclick="deleteMeal(${m.index})">✕</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function pickCat(val, btn) {
+  selectedCat = val;
+  document.querySelectorAll(".cat-option").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+}
+
+async function addMeal() {
+  const name = document.getElementById("addName").value.trim();
+  const url = document.getElementById("addUrl").value.trim();
+  if (!name) { showToast("請輸入菜名"); return; }
+  if (!selectedCat) { showToast("請選擇分類"); return; }
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "新增中…";
+
+  try {
+    await fetch(API, {
+      method: "POST",
+      body: JSON.stringify({ action: "add", name, category: selectedCat, url })
+    });
+    document.getElementById("addName").value = "";
+    document.getElementById("addUrl").value = "";
+    document.querySelectorAll(".cat-option").forEach(b => b.classList.remove("selected"));
+    selectedCat = "";
+    showToast(`「${name}」已新增！`);
+    await fetchMeals();
+    switchTab("list");
+  } catch(e) {
+    showToast("新增失敗，請重試");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "新增菜色";
+  }
+}
+
+async function deleteMeal(index) {
+  if (!confirm("確定要刪除這道菜嗎？")) return;
+  try {
+    await fetch(API, {
+      method: "POST",
+      body: JSON.stringify({ action: "delete", index })
+    });
+    showToast("已刪除");
+    await fetchMeals();
+  } catch(e) {
+    showToast("刪除失敗，請重試");
+  }
+}
+
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach((t, i) => {
+    t.classList.toggle("active", ["random","list","add"][i] === name);
+  });
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById(`tab-${name}`).classList.add("active");
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+fetchMeals();
+</script>
+</body>
+</html>
