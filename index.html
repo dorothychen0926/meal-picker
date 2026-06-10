@@ -395,7 +395,7 @@
     </div>
   </div>
   <div class="form-group">
-    <label class="form-label">影片連結（選填）</label>
+    <label class="form-label">教學連結（選填）</label>
     <input class="form-input" id="addUrl" placeholder="https://…" type="url">
   </div>
   <button class="submit-btn" id="submitBtn" onclick="addMeal()">新增菜色</button>
@@ -443,8 +443,8 @@ function randomPick() {
       <div class="result-category">${pick.category || "未分類"}</div>
       <div class="result-name">${pick.name}</div>
       ${pick.url
-        ? `<a class="result-link" href="${pick.url}" target="_blank">▶ 看做法影片</a>`
-        : `<div class="result-no-link">尚未加入影片連結</div>`}
+        ? `<a class="result-link" href="${pick.url}" target="_blank">▶ 看做法教學</a>`
+        : `<div class="result-no-link">尚未加入教學連結</div>`}
     `;
     card.style.opacity = "1";
   }, 150);
